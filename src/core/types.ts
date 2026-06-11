@@ -21,4 +21,6 @@ export interface AppEventMap {
     'user:relationship-changed': { userId: string; status: 'none' | 'friend' };
     'system:connection-status': { status: 'online' | 'offline' | 'connecting' };
     'settings:font-size-changed': { newSize: number };
+    // NEW: Triggered when a user clicks a friend in the sidebar
+    'ui:chat-selected': { friendId: string; displayName: string };
 }

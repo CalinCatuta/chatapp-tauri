@@ -46,8 +46,15 @@ export class Sidebar {
             // Remove unread status when clicked
             unreadDot.classList.add('hidden');
             friendEl.classList.remove('has-unread');
+
+            // Broadcast that the user wants to switch chats!
+            EventBus.emit('ui:chat-selected', { 
+                friendId: user.publicKey, 
+                displayName: user.displayName 
+            });
             
             // TODO: Emit an event that the active chat changed
+            
         });
 
         this.container.appendChild(friendEl);

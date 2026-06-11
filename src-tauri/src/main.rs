@@ -3,7 +3,7 @@
 // Prevents additional console window on Windows in release mode
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs;
+
 use tauri::Manager;
 
 mod db; // Import our db module
@@ -28,21 +28,33 @@ fn main() {
             commands::messages::get_chat_history
         ])
         .setup(|app| {
-            // 2. Get the OS-specific local app data folder using Tauri v2 APIs
-            // e.g., C:\Users\Name\AppData\Local\com.discord-local-clone
             let app_dir = app.path().app_local_data_dir().expect("Failed to get local data dir");
-            
-            // 3. Ensure our architecture folders exist for later image compression logic
-            fs::create_dir_all(app_dir.join("attachments")).expect("Failed to create attachments folder");
-            fs::create_dir_all(app_dir.join("avatars")).expect("Failed to create avatars folder");
+            std::fs::create_dir_all(app_dir.join("attachments")).unwrap();
+            std::fs::create_dir_all(app_dir.join("avatars")).unwrap();
 
-            // 4. Initialize SQLite inside that hidden folder
             let db_path = app_dir.join("local_chat.db");
-            println!("Initializing DB at: {:?}", db_path);
-            
             let conn = db::sqlite::init_db(db_path).expect("Database initialization failed");
 
-            // 5. Lock the Mutex and inject the live database connection into Tauri's State
+            // --- NEW: SEED TEST DATA ---
+            // Count how many friends exist. If 0, insert test data.
+            let count: i32 = conn.query_row("SELECT COUNT(*) FROM friends", [], |row| row.get(0)).unwrap_or(0);
+            
+            if count == 0 {
+                println!("Database empty. Seeding test data...");
+                conn.execute(
+                    "INSERT INTO friends (public_key, display_name) VALUES (?1, ?2)",
+                    ["test_user_999", "Rustacean Bot"],
+                ).unwrap();
+
+                // Add a welcome message
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as i64;
+                conn.execute(
+                    "INSERT INTO messages (id, sender_id, receiver_id, content, timestamp, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                    rusqlite::params!["msg_001", "test_user_999", "my_key", "Hello from SQLite and Rust!", now, "delivered"],
+                ).unwrap();
+            }
+            // ---------------------------
+
             let state = app.state::<AppState>();
             *state.db.lock().unwrap() = Some(conn);
 

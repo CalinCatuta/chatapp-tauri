@@ -2,6 +2,7 @@
 import { EventBus } from '../../core/EventBus';
 import { Message } from '../../core/types';
 import { createElement } from '../../utils/dom';
+import { API } from '../../core/api'; // Import our new API wrapper
 
 export class ChatView {
     private messageContainer: HTMLElement;
@@ -15,36 +16,47 @@ export class ChatView {
     }
 
     private setupSubscriptions() {
+        // Listen for new incoming messages
         EventBus.on('chat:new-message', (message: Message) => {
-            // Only append the message if we are actively looking at this chat
             if (this.currentActiveUserId === message.senderId || this.currentActiveUserId === message.receiverId) {
                 this.appendMessage(message);
             }
         });
+
+        // Listen for user clicking a friend in the sidebar
+        EventBus.on('ui:chat-selected', async (payload) => {
+            await this.loadChatHistory(payload.friendId, payload.displayName);
+        });
     }
 
-    public setActiveChat(userId: string, userName: string) {
+    private async loadChatHistory(userId: string, userName: string) {
         this.currentActiveUserId = userId;
-        this.messageContainer.innerHTML = ''; // Clear current chat history
-        this.inputField.disabled = false; // Enable typing
         
+        // 1. Update Header and clear current messages
         const headerName = document.getElementById('current-chat-name');
         if (headerName) headerName.textContent = userName;
+        this.messageContainer.innerHTML = ''; 
+        this.inputField.disabled = false;
+
+        // 2. Fetch real history from local SQLite via Rust
+        const messages = await API.getChatHistory(userId);
+
+        // 3. Render messages
+        messages.forEach(msg => this.appendMessage(msg));
+
+        // 4. Scroll to the very bottom to see the newest messages
+        this.messageContainer.scrollTop = this.messageContainer.scrollHeight;
     }
 
     private appendMessage(message: Message) {
-        // Smart Scroll Logic: Check if user is already at the bottom BEFORE adding new message
         const isAtBottom = this.messageContainer.scrollHeight - this.messageContainer.scrollTop <= this.messageContainer.clientHeight + 50;
 
         const msgNode = createElement('div', { classes: ['message-bubble'] });
-        
-        // For now, just add text. Later we will add image attachment logic here.
         const textNode = createElement('p', { text: message.content });
         msgNode.appendChild(textNode);
 
         this.messageContainer.appendChild(msgNode);
 
-        // Auto-scroll to bottom only if they were already at the bottom
         if (isAtBottom) {
             this.messageContainer.scrollTop = this.messageContainer.scrollHeight;
         }
