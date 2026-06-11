@@ -1,0 +1,52 @@
+/* src/ui/styles/main.css */
+
+:root {
+  /* Discord Dark Theme Colors */
+  --bg-primary: #313338;
+  --bg-secondary: #2b2d31;
+  --bg-tertiary: #1e1f22;
+  --text-normal: #dbdee1;
+  --text-muted: #949ba4;
+  --accent-color: #5865F2;
+  --accent-hover: #4752c4;
+  --danger: #da373c;
+  
+  /* Dynamic Settings Variables */
+  --chat-font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-normal);
+  height: 100vh;
+  overflow: hidden; /* Prevent body scrolling */
+}
+
+#app-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Custom Scrollbar to match Discord */
+.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollable::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+.scrollable::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}

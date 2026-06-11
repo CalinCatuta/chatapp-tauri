@@ -1,22 +1,14 @@
-import { invoke } from "@tauri-apps/api/core";
+// src/main.ts
+import { EventBus } from './core/EventBus';
 
-let greetInputEl: HTMLInputElement | null;
-let greetMsgEl: HTMLElement | null;
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('App DOM Loaded. Initializing architecture...');
 
-async function greet() {
-  if (greetMsgEl && greetInputEl) {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsgEl.textContent = await invoke("greet", {
-      name: greetInputEl.value,
+    // 1. Test our EventBus typing (Autocomplete will work here!)
+    EventBus.on('system:connection-status', (payload) => {
+        console.log(`[EventBus] Connection status changed: ${payload.status}`);
     });
-  }
-}
 
-window.addEventListener("DOMContentLoaded", () => {
-  greetInputEl = document.querySelector("#greet-input");
-  greetMsgEl = document.querySelector("#greet-msg");
-  document.querySelector("#greet-form")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    greet();
-  });
+    // 2. Trigger the event to test it
+    EventBus.emit('system:connection-status', { status: 'online' });
 });
