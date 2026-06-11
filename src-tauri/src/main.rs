@@ -25,7 +25,8 @@ fn main() {
         // Tell Tauri to listen for these specific commands from TypeScript
         .invoke_handler(tauri::generate_handler![
             commands::friends::get_friends,
-            commands::messages::get_chat_history
+            commands::messages::get_chat_history,
+            commands::messages::send_message
         ])
         .setup(|app| {
             let app_dir = app.path().app_local_data_dir().expect("Failed to get local data dir");

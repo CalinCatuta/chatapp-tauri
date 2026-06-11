@@ -27,6 +27,32 @@ export class ChatView {
         EventBus.on('ui:chat-selected', async (payload) => {
             await this.loadChatHistory(payload.friendId, payload.displayName);
         });
+
+        // NEW: Handle user typing and sending messages
+        this.inputField.addEventListener('keydown', async (e: KeyboardEvent) => {
+            // Check if they pressed Enter (and are NOT holding Shift for a new line)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevents the textarea from jumping to a new line
+
+                const text = this.inputField.value.trim();
+                
+                // Don't send empty messages, and ensure we have an active chat
+                if (!text || !this.currentActiveUserId) return;
+
+                // 1. Instantly clear the input field for good UX
+                this.inputField.value = '';
+
+                // 2. Send the message to the Rust backend to save in SQLite
+                const savedMessage = await API.sendMessage(this.currentActiveUserId, text);
+
+                if (savedMessage) {
+                    // 3. Broadcast the saved message to the entire app!
+                    // This will trigger the EventBus listener at the top of this file,
+                    // which will call this.appendMessage() automatically.
+                    EventBus.emit('chat:new-message', savedMessage);
+                }
+            }
+        });
     }
 
     private async loadChatHistory(userId: string, userName: string) {

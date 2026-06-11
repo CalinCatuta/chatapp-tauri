@@ -30,5 +30,17 @@ export const API = {
             console.error(`Failed to fetch history for ${friendId}:`, error);
             return [];
         }
+    },
+
+    /**
+     * Sends a new message to the local SQLite database via Rust.
+     */
+    async sendMessage(receiverId: string, content: string): Promise<Message | null> {
+        try {
+            return await invoke<Message>('send_message', { receiverId, content });
+        } catch (error) {
+            console.error('Failed to send message:', error);
+            return null;
+        }
     }
 };
