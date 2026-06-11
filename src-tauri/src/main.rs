@@ -4,24 +4,29 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
-use std::sync::Mutex;
 use tauri::Manager;
 
 mod db; // Import our db module
+mod commands; // We need to tell Tauri that these commands exist so the frontend is allowed to call them.
 
 // This is our Global Backend State.
 // We wrap the SQLite connection in a Mutex because multiple Tauri commands
 // (like sending an image and receiving a text) might try to use it simultaneously.
 pub struct AppState {
-    pub db: Mutex<Option<rusqlite::Connection>>,
+    pub db: std::sync::Mutex<Option<rusqlite::Connection>>,
 }
 
 fn main() {
     tauri::Builder::default()
         // 1. Register our empty state container
         .manage(AppState {
-            db: Mutex::new(None),
+            db: std::sync::Mutex::new(None),
         })
+        // Tell Tauri to listen for these specific commands from TypeScript
+        .invoke_handler(tauri::generate_handler![
+            commands::friends::get_friends,
+            commands::messages::get_chat_history
+        ])
         .setup(|app| {
             // 2. Get the OS-specific local app data folder using Tauri v2 APIs
             // e.g., C:\Users\Name\AppData\Local\com.discord-local-clone
